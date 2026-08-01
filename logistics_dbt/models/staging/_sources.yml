@@ -6,3 +6,5 @@ sources:
     schema: RAW
     tables:
       - name: shipments
+      - name: inventory_snapshots
+      - name: shipment_status_history

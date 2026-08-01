@@ -18,3 +18,27 @@ models:
       - name: cost
         tests:
           - not_null
+
+  - name: stg_inventory_snapshots
+    columns:
+      - name: part_name
+        tests:
+          - not_null
+      - name: warehouse_id
+        tests:
+          - not_null
+      - name: warehouse_inventory
+        tests:
+          - not_null
+
+  - name: stg_status_history
+    columns:
+      - name: shipment_id
+        tests:
+          - not_null
+      - name: event_status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['created', 'picked', 'packed', 'shipped', 'out_for_delivery', 'delivered']

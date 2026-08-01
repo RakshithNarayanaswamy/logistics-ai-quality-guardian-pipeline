@@ -6,11 +6,14 @@ from datetime import datetime, timedelta
 
 from pyspark.sql import types as T
 
+from pipeline.catalog import WAREHOUSE_IDS, get_part_catalog
 from pipeline.config import RAW_DIR, RECORD_COUNT
 from pipeline.spark_utils import get_spark
 
 _CARRIERS = ["FedEx", "UPS", "DHL", "XPO Logistics", "Maersk"]
-_PARTS = ["Battery Pack", "Motor Assembly", "Chassis Frame", "Control Unit", "Sensor Array"]
+# Computed once at import time (not per-row) — same catalog inventory.py uses,
+# so fact_shipments and fact_inventory_snapshot share the same dim_part keys.
+_PARTS = get_part_catalog()
 _STATUSES = ["delivered", "in_transit", "delayed"]
 
 _RAW_SCHEMA = T.StructType([
@@ -47,7 +50,7 @@ def _random_row(_):
         round(random.uniform(100, 50000), 2),
         (order_date + timedelta(days=random.randint(0, lead_time))).date().isoformat(),
         status,
-        f"WH-{random.randint(1, 5)}",
+        random.choice(WAREHOUSE_IDS),
         order_date.date().isoformat(),
         promised_date.date().isoformat(),
         actual_date.date().isoformat() if actual_date else None,
