@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: raw
+    database: LOGISTICS_PIPELINE
+    schema: RAW
+    tables:
+      - name: shipments

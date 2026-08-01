@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: dim_carrier
+    columns:
+      - name: carrier_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_warehouse
+    columns:
+      - name: warehouse_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_part
+    columns:
+      - name: part_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_shipments
+    columns:
+      - name: shipment_id
+        tests:
+          - unique
+          - not_null
+      - name: carrier_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_carrier')
+                field: carrier_key
+      - name: warehouse_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_warehouse')
+                field: warehouse_key
+      - name: part_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_part')
+                field: part_key

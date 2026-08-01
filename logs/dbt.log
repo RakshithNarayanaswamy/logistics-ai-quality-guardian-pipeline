@@ -1,0 +1,29 @@
+[0m01:22:05.283991 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1089729c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10948ea20>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1095f1a00>]}
+
+
+============================== 01:22:05.287574 | 8899066b-dd16-4a44-96aa-0c14d03026de ==============================
+[0m01:22:05.287574 [info ] [MainThread]: Running with dbt=1.12.0
+[0m01:22:05.287876 [debug] [MainThread]: running dbt with arguments {'warn_error': 'None', 'use_colors': 'True', 'quiet': 'False', 'hints_enabled': 'True', 'introspect': 'True', 'write_json': 'True', 'indirect_selection': 'eager', 'target_path': 'None', 'use_experimental_parser': 'False', 'invocation_command': 'dbt init logistics_dbt --skip-profile-setup', 'log_cache_events': 'False', 'profiles_dir': '/Users/raks/.dbt', 'log_path': 'logs', 'printer_width': '80', 'version_check': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'fail_fast': 'False', 'empty': 'None', 'no_print': 'None', 'static_parser': 'True', 'send_anonymous_usage_stats': 'True', 'debug': 'False', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])'}
+[0m01:22:05.296369 [info ] [MainThread]: Creating dbt configuration folder at /Users/raks/.dbt
+[0m01:22:05.297260 [debug] [MainThread]: Starter project path: /Users/raks/Documents/Project /Data Projects/logistics-ai-quality-guardian-pipeline/airflow-env/lib/python3.12/site-packages/dbt/include/starter_project
+[0m01:22:05.300678 [info ] [MainThread]: Your new dbt project "logistics_dbt" was created!
+Initialized new project in /Users/raks/Documents/Project /Data Projects/logistics-ai-quality-guardian-pipeline/logistics_dbt/logistics_dbt
+
+For more information on how to configure the profiles.yml file,
+please consult the dbt documentation here:
+
+  https://docs.getdbt.com/docs/configure-your-profile
+
+One more thing:
+
+Need help? Don't hesitate to reach out to us via GitHub issues or on Slack:
+
+  https://community.getdbt.com/
+
+Happy modeling!
+
+[0m01:22:05.309415 [debug] [MainThread]: Resource report: {"command_name": "init", "command_success": true, "command_wall_clock_time": 0.072758, "process_in_blocks": "0", "process_kernel_time": 0.12308, "process_mem_max_rss": "123355136", "process_out_blocks": "0", "process_user_time": 0.649257}
+[0m01:22:05.309730 [debug] [MainThread]: Command `dbt init` succeeded at 01:22:05.309678 after 0.07 seconds
+[0m01:22:05.310149 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1096434d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1089729c0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x109610c20>]}
+[0m01:22:05.310347 [debug] [MainThread]: Flushing usage events
+[0m01:22:05.645721 [debug] [MainThread]: An error was encountered while trying to flush usage events
