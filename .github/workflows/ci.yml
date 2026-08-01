@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lint tools
+        run: pip install ruff
+
+      - name: Lint
+        run: ruff check airflow/dags
+
+      - name: Syntax-check DAG (no Airflow install needed)
+        run: python -m py_compile airflow/dags/logistics_pipeline.py
+
+  # TODO: once dbt models exist under a dbt/ project, add a job here that:
+  #   - installs dbt-snowflake
+  #   - runs `dbt deps && dbt build --target ci` against a disposable/dev schema
+  # For now, only Python lint/syntax checks run on push.

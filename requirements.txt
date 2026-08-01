@@ -1,0 +1,4 @@
+apache-airflow==2.9.1
+pyspark==4.2.0
+pandas==2.2.2
+Faker==40.21.0
