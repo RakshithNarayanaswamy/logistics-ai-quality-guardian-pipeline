@@ -7,7 +7,7 @@ from pipeline.config import BASE_DIR
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-_MODEL = "claude-sonnet-5"
+_MODEL = "claude-haiku-4-5-20251001"
 
 
 def ask_claude(system_prompt, user_prompt, max_tokens=500):
