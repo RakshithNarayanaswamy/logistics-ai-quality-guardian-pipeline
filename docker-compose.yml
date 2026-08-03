@@ -1,0 +1,24 @@
+services:
+  airflow:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env  # Snowflake + Anthropic credentials (gitignored, never baked into the image)
+    environment:
+      LOGISTICS_RECORD_COUNT: "10000"  # dev-mode default; raise to 1000000 for full scale
+      # Keep the metadata DB on a named volume so DAG-run history survives restarts
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "sqlite:////opt/airflow-db/airflow.db"
+    volumes:
+      # Live-mount source so code edits don't require a rebuild
+      - ./airflow/dags:/opt/project/airflow/dags
+      - ./pipeline:/opt/project/pipeline
+      - ./ai:/opt/project/ai
+      - ./ml:/opt/project/ml
+      - ./logistics_dbt:/opt/project/logistics_dbt
+      # Persist generated data + Airflow metadata DB across container restarts
+      - ./data:/opt/project/data
+      - airflow-db:/opt/airflow-db
+
+volumes:
+  airflow-db:

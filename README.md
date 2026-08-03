@@ -212,14 +212,45 @@ Set `LOGISTICS_RECORD_COUNT` (default `10000`) to control shipment volume for
 faster local iteration — the full pipeline has been verified end-to-end at
 `1000000`.
 
+## Docker
+
+```bash
+docker compose up
+```
+
+Builds the full environment (Python 3.12 + Java 17 for PySpark + all
+dependencies) and runs `airflow standalone` on port 8080 (admin credentials
+printed in the logs on first boot). Source directories are live-mounted, so
+code edits don't require a rebuild. Credentials come from your local `.env`
+via `env_file` — they're never baked into the image.
+
 ## CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs `ruff` lint + a DAG syntax
-check on every push. A dbt test/build job is a natural next addition once
-credentials can be safely provided in CI.
+GitHub Actions (`.github/workflows/ci.yml`), three jobs:
+
+- **lint-and-check** (every push): `ruff` across all Python packages + DAG syntax check
+- **dbt-parse** (every push): validates the entire dbt project — SQL syntax,
+  refs, configs — using dummy credentials, no Snowflake connection needed
+- **dbt-build** (manual trigger only): full `dbt build` with real tests against
+  Snowflake, using repository secrets — kept off the push path so routine
+  commits don't burn warehouse credits
+
+## Schema-drift injector
+
+Deliberately breaks `RAW.SHIPMENTS` to prove the quality guardian catches real
+failures (and, later, to trigger Project 2's root-cause agent):
+
+```bash
+python -m pipeline.drift_injector null_spike --column carrier_name --fraction 0.15
+python -m pipeline.drift_injector schema_drop_column --column promised_delivery_date
+python -m pipeline.drift_injector revert
+```
+
+Scenarios: `row_count_drop`, `null_spike`, `new_status`, `schema_drop_column`
+(destructive), `schema_add_column` (additive), `revert`. The
+additive-vs-destructive distinction is deliberate — it's the safe-to-auto-fix
+vs. needs-a-human boundary Project 2 is built around.
 
 ## Status / next steps
 
 - `refresh_dashboard` is the only remaining stub in the DAG.
-- After that: a schema-drift injector script (deliberately breaks a batch to
-  test the quality guardian, and to later trigger Project 2's root-cause agent).
