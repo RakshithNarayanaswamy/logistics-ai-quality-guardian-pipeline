@@ -3,6 +3,14 @@ from pipeline.snowflake_utils import get_connection
 _ANALYTICS_SCHEMA = "ANALYTICS"
 
 
+def _num(value):
+    """Snowflake returns NUMBER columns as Decimal. Left as-is, pandas gives
+    them `object` dtype and plotting libraries treat them as categories rather
+    than magnitudes — so coerce to float at the boundary.
+    """
+    return None if value is None else float(value)
+
+
 def compute_metrics():
     """Deterministic-only: queries dbt's marts for the 7 core supply-chain metrics.
     No AI here — see ai/metric_assistant.py for the narration layer.
@@ -19,7 +27,7 @@ def compute_metrics():
             1)
             FROM fact_shipments
         """)
-        otif_pct = cur.fetchone()[0]
+        otif_pct = _num(cur.fetchone()[0])
 
         # 4. Lead time / cycle time
         cur.execute("""
@@ -27,7 +35,7 @@ def compute_metrics():
             FROM fact_shipments
             WHERE lead_time_days IS NOT NULL
         """)
-        avg_lead_time_days = cur.fetchone()[0]
+        avg_lead_time_days = _num(cur.fetchone()[0])
 
         # 2. Shipment status transitions — avg hours spent between each pair of stages
         cur.execute("""
@@ -51,7 +59,7 @@ def compute_metrics():
             ORDER BY 1
         """)
         status_transition_avg_hours = [
-            {"transition": r[0], "avg_hours": r[1]} for r in cur.fetchall()
+            {"transition": r[0], "avg_hours": _num(r[1])} for r in cur.fetchall()
         ]
 
         # 3. Inventory levels / stockouts — most recent snapshot date
@@ -64,7 +72,7 @@ def compute_metrics():
             FROM fact_inventory_snapshot, latest
             WHERE snapshot_date = latest.max_date
         """)
-        stockout_rate_pct = cur.fetchone()[0]
+        stockout_rate_pct = _num(cur.fetchone()[0])
 
         # 5. Carrier performance & cost
         cur.execute("""
@@ -81,7 +89,7 @@ def compute_metrics():
             ORDER BY otif_pct ASC
         """)
         carrier_performance = [
-            {"carrier_name": r[0], "otif_pct": r[1], "avg_cost": r[2]}
+            {"carrier_name": r[0], "otif_pct": _num(r[1]), "avg_cost": _num(r[2])}
             for r in cur.fetchall()
         ]
 
@@ -93,7 +101,7 @@ def compute_metrics():
             ORDER BY next_7_day_forecast DESC
         """)
         demand_forecast = [
-            {"part_name": r[0], "next_7_day_total": r[1]}
+            {"part_name": r[0], "next_7_day_total": _num(r[1])}
             for r in cur.fetchall()
         ]
 
@@ -102,7 +110,7 @@ def compute_metrics():
             SELECT ROUND(100.0 * SUM(IFF(status = 'delayed', 1, 0)) / COUNT(*), 1)
             FROM fact_shipments
         """)
-        delay_rate_pct = cur.fetchone()[0]
+        delay_rate_pct = _num(cur.fetchone()[0])
 
         cur.execute("""
             SELECT
@@ -114,7 +122,7 @@ def compute_metrics():
             ORDER BY delay_rate_pct DESC
         """)
         delay_rate_by_carrier = [
-            {"carrier_name": r[0], "delay_rate_pct": r[1]} for r in cur.fetchall()
+            {"carrier_name": r[0], "delay_rate_pct": _num(r[1])} for r in cur.fetchall()
         ]
 
         return {

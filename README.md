@@ -80,8 +80,14 @@ flowchart TB
         R1 --> R2["ai/metric_assistant.py"]
     end
 
-    Q2 --> OUT1["Plain-English health report"]
-    R2 --> OUT2["Plain-English metric narrative"]
+    subgraph OUT["6. Outputs"]
+        Q2 --> P1[("ANALYTICS.PIPELINE_REPORTS")]
+        R2 --> P1
+        P1 --> P2["pipeline/publish.py"]
+        P2 --> P3["Slack digest"]
+        P1 --> P4["dashboard/app.py\n(Streamlit)"]
+        F1 --> P4
+    end
 ```
 
 ## The 12-task Airflow DAG
@@ -99,7 +105,7 @@ flowchart TB
 | 9 | `train_demand_forecast` | Trains a `GradientBoostingRegressor`, writes a 7-day-ahead forecast |
 | 10 | `quality_guardian` | Deterministic drift checks (Role 1) → Claude API health report |
 | 11 | `metric_assistant` | Queries the 7 core metrics (Role 2) → Claude API narrative |
-| 12 | `refresh_dashboard` | *(stub — not yet built)* |
+| 12 | `publish_reports` | Pushes the run's AI reports + headline metrics to Slack |
 
 ## The 7 core supply-chain metrics
 
@@ -140,12 +146,18 @@ pipeline/
   dbt_runner.py            run_dbt_models (invokes `dbt build` as a subprocess)
   quality_checks.py        Deterministic drift checks + run-history table
   metrics.py               Computes all 7 core metrics via SQL
+  reports.py               Persists/reads the AI reports in Snowflake
+  notifications.py         Slack incoming-webhook sender
+  publish.py               Builds the digest and posts it (final DAG task)
+  drift_injector.py        CLI tool to deliberately break a batch
 ai/
   claude_client.py         Thin wrapper around the Claude API
   quality_guardian.py       Role 1: narrates quality_checks output
   metric_assistant.py       Role 2: narrates metrics output
 ml/
   demand_forecasting.py    Classical ML forecasting model (scikit-learn)
+dashboard/
+  app.py                   Streamlit dashboard (reads Snowflake directly)
 logistics_dbt/
   models/staging/           Views: stg_shipments, stg_inventory_snapshots, stg_status_history
   models/marts/             Tables: dim_*, fact_* (Kimball star)
@@ -195,10 +207,17 @@ data/                      raw/ staged/ quarantine/ (gitignored — regenerated 
    python3.12 -m venv airflow-env
    ./airflow-env/bin/python3 -m pip install -r requirements.txt
    ```
-2. Copy `.env.example` to `.env` and fill in your own Snowflake credentials
-   (`SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, `SNOWFLAKE_PASSWORD`,
-   `SNOWFLAKE_WAREHOUSE`, `SNOWFLAKE_ROLE`) and `ANTHROPIC_API_KEY`. This file
-   is gitignored — never commit real credentials.
+2. Create a `.env` in the project root with your own credentials — this file is
+   gitignored; never commit real values:
+   ```
+   SNOWFLAKE_ACCOUNT=...
+   SNOWFLAKE_USER=...
+   SNOWFLAKE_PASSWORD=...
+   SNOWFLAKE_WAREHOUSE=...
+   SNOWFLAKE_ROLE=...
+   ANTHROPIC_API_KEY=...
+   SLACK_WEBHOOK_URL=...   # optional — Slack digest is skipped if absent
+   ```
 3. Source the environment:
    ```bash
    source start.sh
@@ -211,6 +230,30 @@ data/                      raw/ staged/ quarantine/ (gitignored — regenerated 
 Set `LOGISTICS_RECORD_COUNT` (default `10000`) to control shipment volume for
 faster local iteration — the full pipeline has been verified end-to-end at
 `1000000`.
+
+## Outputs
+
+The AI reports don't just live in Airflow logs — each run persists them to
+`ANALYTICS.PIPELINE_REPORTS` (one row per run per report type), which gives
+both a durable history and a source for the two consumers below.
+
+### Streamlit dashboard
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Reads Snowflake directly, so it always reflects the latest completed batch —
+no DAG task "refreshes" it. Shows the four headline metrics as tiles, both AI
+narratives, the carrier table, per-stage timings, the demand forecast, and an
+expandable history of previous health reports.
+
+### Slack digest
+
+The final DAG task (`publish_reports`) posts the headline metrics plus both AI
+narratives to an incoming webhook. Set `SLACK_WEBHOOK_URL` in `.env`; if it's
+absent the task logs the digest and skips sending, so the DAG doesn't fail on
+machines where notifications aren't configured.
 
 ## Docker
 
@@ -251,6 +294,7 @@ Scenarios: `row_count_drop`, `null_spike`, `new_status`, `schema_drop_column`
 additive-vs-destructive distinction is deliberate — it's the safe-to-auto-fix
 vs. needs-a-human boundary Project 2 is built around.
 
-## Status / next steps
+## Status
 
-- `refresh_dashboard` is the only remaining stub in the DAG.
+All 12 DAG tasks are implemented and have been verified end-to-end through the
+real Airflow scheduler at 1M+ record scale.

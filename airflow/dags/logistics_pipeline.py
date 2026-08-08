@@ -20,16 +20,13 @@ from pipeline.inventory import extract_inventory_snapshots  # noqa: E402
 from pipeline.load import load_to_snowflake  # noqa: E402
 from pipeline.load_inventory import load_inventory_to_snowflake  # noqa: E402
 from pipeline.load_status_history import load_status_history_to_snowflake  # noqa: E402
+from pipeline.publish import publish_reports  # noqa: E402
 from pipeline.status_history import extract_status_history  # noqa: E402
 from pipeline.transform import transform_data  # noqa: E402
 
 
 def train_demand_forecast():
     demand_forecasting.run()
-
-
-def refresh_dashboard():
-    print("Refreshing logistics dashboard")
 
 
 with DAG(
@@ -59,6 +56,6 @@ with DAG(
     t9 = PythonOperator(task_id="train_demand_forecast", python_callable=train_demand_forecast)
     t10 = PythonOperator(task_id="quality_guardian", python_callable=run_quality_guardian)
     t11 = PythonOperator(task_id="metric_assistant", python_callable=run_metric_assistant)
-    t12 = PythonOperator(task_id="refresh_dashboard", python_callable=refresh_dashboard)
+    t12 = PythonOperator(task_id="publish_reports", python_callable=publish_reports)
 
     t1 >> t2 >> t3 >> t4 >> t5 >> t6 >> t7 >> t8 >> t9 >> t10 >> t11 >> t12

@@ -1,8 +1,13 @@
 import os
 
 import snowflake.connector
+from dotenv import load_dotenv
 
-from pipeline.config import SNOWFLAKE_DATABASE
+from pipeline.config import BASE_DIR, SNOWFLAKE_DATABASE
+
+# Loaded here because this is the only module that reads the Snowflake env vars.
+# Callers (DAG tasks, the Streamlit dashboard) then don't each need to remember to.
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 def get_connection(schema):
